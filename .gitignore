@@ -1,0 +1,16 @@
+# Frontend dependencies and build output
+node_modules/
+dist/
+
+# Java build output
+target/
+
+# IDE and macOS files
+.idea/
+*.iml
+.DS_Store
+
+# Local secrets
+.env
+.env.*
+!.env.example
