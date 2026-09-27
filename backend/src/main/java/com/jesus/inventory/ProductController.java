@@ -5,21 +5,36 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 public class ProductController {
 
+    private final ProductRepository productRepository;
+
+    public ProductController(ProductRepository productRepository){
+        this.productRepository = productRepository;
+    }
+
     @GetMapping("/api/products")
     public List<Product> getProducts(){
-        return List.of(
-                new Product(1L, "Mechanical Keyboard",
-                        new BigDecimal("79.99"), 12),
-                new Product(2L, "Wireless mouse",
-                        new BigDecimal("29.99"), 25),
-                new Product(3L, "USB-C Hub",
-                        new BigDecimal("49.99"), 8),
-                new Product(4L, "Gaming Headset",
-                        new BigDecimal("59.99"), 10)
-        );
+        return productRepository.findAll();
+    }
+    @PutMapping("/api/products/{id}/stock")
+    public ResponseEntity<String> updateStock(
+            @PathVariable("id") long id,
+            @RequestBody UpdateStockRequest request
+            ){
+        if(request.stock() == null || request.stock() < 0){
+            return ResponseEntity.badRequest().body("Stock is required and cannot be negative");
+        }
+        int updateRows = productRepository.updateStock(id, request.stock());
+        if(updateRows == 0){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok("Stock updated.");
     }
 }
