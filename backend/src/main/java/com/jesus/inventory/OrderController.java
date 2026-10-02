@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -31,5 +33,14 @@ public class OrderController {
     public List<Order> getOrders(){
         return orderService.getOrders();
     }
+
+    @PatchMapping("/{orderId}/ship")
+    public ResponseEntity<Void> shipOrder(
+            @PathVariable("orderId") long orderId){
+        orderService.shipOrder(orderId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

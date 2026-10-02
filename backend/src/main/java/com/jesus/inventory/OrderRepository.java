@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.time.OffsetDateTime;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 @Repository
 public class OrderRepository {
@@ -60,5 +62,17 @@ public class OrderRepository {
                 row.getObject("created_at", OffsetDateTime.class)
         ));
     }
+
+    public boolean markShipped(long orderId){
+        String sql = """
+                UPDATE orders
+                SET status = 'SHIPPED'
+                WHERE id = ?
+                AND status = 'PENDING'
+                """;
+        int updateRows = jdbcTemplate.update(sql, orderId);
+        return updateRows == 1;
+    }
+
 
 }

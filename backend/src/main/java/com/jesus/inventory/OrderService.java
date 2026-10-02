@@ -52,4 +52,21 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
+    public void shipOrder(long orderId){
+        if(orderId <= 0){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Order ID must be positive."
+            );
+        }
+        boolean shipped = orderRepository.markShipped(orderId);
+
+        if(!shipped){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Order does not exist or is no longer pending."
+            );
+        }
+    }
+
 }
