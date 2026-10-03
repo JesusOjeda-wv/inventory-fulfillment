@@ -18,6 +18,8 @@ export default function OrderHistory({ refreshKey }: OrderHistoryProps) {
     const [orders, setOrders] = useState<Order[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [shippingOrders, setShippingOrders] = useState<Record<number, boolean>>({})
+    const [shippingErrors, setShippingErrors] = useState<Record<number, string>>({})
 
     useEffect(() => {
         let ignore = false
@@ -56,6 +58,42 @@ export default function OrderHistory({ refreshKey }: OrderHistoryProps) {
         }
     }, [refreshKey])
 
+    async function shipOrder(orderId: number) {
+        if (shippingOrders[orderId]) {
+            return
+        }
+
+        setShippingOrders((previous) => ({ ...previous, [orderId]: true }))
+        setShippingErrors((previous) => ({ ...previous, [orderId]: '' }))
+
+        try {
+            const response = await fetch(`/api/orders/${orderId}/ship`, {
+                method: 'PATCH',
+            })
+
+            if (!response.ok) {
+                setShippingErrors((previous) => ({
+                    ...previous,
+                    [orderId]: response.status === 409
+                        ? `Order #${orderId} may already be shipped or removed. Refresh the page to check its status.`
+                        : `Could not ship order #${orderId}. Please try again.`,
+                }))
+                return
+            }
+
+            setOrders((previous) => previous.map((order) =>
+                order.id === orderId ? { ...order, status: 'SHIPPED' } : order
+            ))
+        } catch {
+            setShippingErrors((previous) => ({
+                ...previous,
+                [orderId]: `Could not ship order #${orderId}. Please try again.`,
+            }))
+        } finally {
+            setShippingOrders((previous) => ({ ...previous, [orderId]: false }))
+        }
+    }
+
     return (
         <section aria-labelledby="orders-heading">
             <h2 id="orders-heading">Order history</h2>
@@ -76,6 +114,7 @@ export default function OrderHistory({ refreshKey }: OrderHistoryProps) {
                             <th scope="col">Total</th>
                             <th scope="col">Status</th>
                             <th scope="col">Placed</th>
+                            <th scope="col">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -90,6 +129,21 @@ export default function OrderHistory({ refreshKey }: OrderHistoryProps) {
                                 <td>{order.status}</td>
                                 <td>
                                     {new Date(order.createdAt).toLocaleString()}
+                                </td>
+                                <td>
+                                    {order.status === 'PENDING' && (
+                                        <button
+                                            type="button"
+                                            disabled={shippingOrders[order.id] === true}
+                                            aria-label={`Ship order #${order.id}`}
+                                            onClick={() => void shipOrder(order.id)}
+                                        >
+                                            {shippingOrders[order.id] ? 'Shipping…' : 'Ship'}
+                                        </button>
+                                    )}
+                                    {shippingErrors[order.id] && (
+                                        <p role="alert">{shippingErrors[order.id]}</p>
+                                    )}
                                 </td>
                             </tr>
                         ))}
