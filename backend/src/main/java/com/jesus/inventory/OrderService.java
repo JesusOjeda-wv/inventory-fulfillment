@@ -24,6 +24,9 @@ public class OrderService {
     @Transactional
     public long createOrder(CreateOrderRequest request){
         if(request.productId() == null || request.productId() <= 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product ID must be positive");
+        }
+        if(request.quantity() == null || request.quantity() <= 0){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be positive");
         }
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResponseStatusException(
