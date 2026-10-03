@@ -24,6 +24,9 @@ public class OrderService {
     @Transactional
     public long createOrder(CreateOrderRequest request){
         if(request.productId() == null || request.productId() <= 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product ID must be positive");
+        }
+        if(request.quantity() == null || request.quantity() <= 0){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be positive");
         }
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResponseStatusException(
@@ -50,6 +53,23 @@ public class OrderService {
     }
     public List<Order> getOrders(){
         return orderRepository.findAll();
+    }
+
+    public void shipOrder(long orderId){
+        if(orderId <= 0){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Order ID must be positive."
+            );
+        }
+        boolean shipped = orderRepository.markShipped(orderId);
+
+        if(!shipped){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Order does not exist or is no longer pending."
+            );
+        }
     }
 
 }
